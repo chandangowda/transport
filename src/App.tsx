@@ -94,7 +94,7 @@ function App() {
                   />
                    <Route path="/trips">
                     <Route index element={<TripsList />} />
-                    <Route path="trips" element={<TripsCreate />} />
+                    <Route path="create" element={<TripsCreate />} />
                     <Route path="trips/:id" element={<TripsEdit />} />
                     <Route path="trips/:id" element={<TripsShow />} />
                   </Route>
