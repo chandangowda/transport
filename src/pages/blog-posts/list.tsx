@@ -21,8 +21,7 @@ export const BlogPostList = () => {
         ?.map((item: any) => item?.category?.id)
         .filter(Boolean) ?? [],
     queryOptions: {
-      enabled: !!dataGridProps?.rows,
-    },
+      enabled: !!dataGridProps?.rows    },
   });
 
   const columns = React.useMemo<GridColDef[]>(

@@ -1,3 +1,6 @@
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Autocomplete, Box, MenuItem, Select, TextField } from "@mui/material";
 import { Create, useAutocomplete } from "@refinedev/mui";
 import { useForm } from "@refinedev/react-hook-form";
@@ -18,28 +21,28 @@ export const BlogPostCreate = () => {
 
   return (
     <Create isLoading={formLoading} saveButtonProps={saveButtonProps}>
+
       <Box
         component="form"
         sx={{ display: "flex", flexDirection: "column" }}
         autoComplete="off"
       >
         <TextField
-          {...register("title", {
+          {...register("name", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.title}
-          helperText={(errors as any)?.title?.message}
+          error={!!(errors as any)?.name}
+          helperText={(errors as any)?.title?.name}
           margin="normal"
           fullWidth
-          InputLabelProps={{ shrink: true }}
+          slotProps={{ inputLabel: { shrink: true } }}
           type="text"
-          label={"Title"}
-          name="title"
+          label={"Name"}
+          name="name"
         />
+        
         <TextField
-          {...register("content", {
-            required: "This field is required",
-          })}
+
           error={!!(errors as any)?.content}
           helperText={(errors as any)?.content?.message}
           margin="normal"

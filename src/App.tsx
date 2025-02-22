@@ -16,7 +16,6 @@ import routerBindings, {
   NavigateToResource,
   UnsavedChangesNotifier,
 } from "@refinedev/react-router";
-import dataProvider from "@refinedev/simple-rest";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router";
 import { Header } from "./components/header";
 import { ColorModeContextProvider } from "./contexts/color-mode";
@@ -32,8 +31,13 @@ import {
   CategoryList,
   CategoryShow,
 } from "./pages/categories";
+import { CustomersCreate, CustomersEdit, CustomersList, CustomersShow } from "./pages/customer";
+import { firebasedatabase } from "./firebaseConfig";
+import { TripsCreate, TripsEdit, TripsList, TripsShow } from "./pages/trips";
 
 function App() {
+
+
   return (
     <BrowserRouter>
       <GitHubBanner />
@@ -42,74 +46,78 @@ function App() {
           <CssBaseline />
           <GlobalStyles styles={{ html: { WebkitFontSmoothing: "auto" } }} />
           <RefineSnackbarProvider>
-            <DevtoolsProvider>
-              <Refine
-                dataProvider={dataProvider("https://api.fake-rest.refine.dev")}
-                notificationProvider={useNotificationProvider}
-                routerProvider={routerBindings}
-                resources={[
-                  {
-                    name: "blog_posts",
-                    list: "/blog-posts",
-                    create: "/blog-posts/create",
-                    edit: "/blog-posts/edit/:id",
-                    show: "/blog-posts/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+            <Refine
+              dataProvider={firebasedatabase.getDataProvider()}
+              notificationProvider={useNotificationProvider}
+              routerProvider={routerBindings}
+              resources={[
+                {
+                  name: "trips",
+                  list: "/trips",
+                  create: "/trips/create",
+                  edit: "/trips/edit/:id",
+                  show: "/trips/show/:id",
+                  meta: {
+                    canDelete: true,
                   },
-                  {
-                    name: "categories",
-                    list: "/categories",
-                    create: "/categories/create",
-                    edit: "/categories/edit/:id",
-                    show: "/categories/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                },
+                {
+                  name: "customers",
+                  list: "/customers",
+                  create: "/customers/create",
+                  edit: "/customers/edit/:id",
+                  show: "/customers/show/:id",
+                  meta: {
+                    canDelete: true,
                   },
-                ]}
-                options={{
-                  syncWithLocation: true,
-                  warnWhenUnsavedChanges: true,
-                  useNewQueryKeys: true,
-                  projectId: "21YaUM-ygVnFd-UlNxIn",
-                }}
-              >
-                <Routes>
+                },
+               
+              ]}
+              options={{
+                syncWithLocation: true,
+                warnWhenUnsavedChanges: true,
+                useNewQueryKeys: true,
+                projectId: "21YaUM-ygVnFd-UlNxIn",
+              }}
+            >
+              <Routes>
+                <Route
+                  element={
+                    <ThemedLayoutV2 Header={() => <Header sticky />}>
+                      <Outlet />
+                    </ThemedLayoutV2>
+                  }
+                >
                   <Route
-                    element={
-                      <ThemedLayoutV2 Header={() => <Header sticky />}>
-                        <Outlet />
-                      </ThemedLayoutV2>
-                    }
-                  >
-                    <Route
-                      index
-                      element={<NavigateToResource resource="blog_posts" />}
-                    />
-                    <Route path="/blog-posts">
-                      <Route index element={<BlogPostList />} />
-                      <Route path="create" element={<BlogPostCreate />} />
-                      <Route path="edit/:id" element={<BlogPostEdit />} />
-                      <Route path="show/:id" element={<BlogPostShow />} />
-                    </Route>
-                    <Route path="/categories">
-                      <Route index element={<CategoryList />} />
-                      <Route path="create" element={<CategoryCreate />} />
-                      <Route path="edit/:id" element={<CategoryEdit />} />
-                      <Route path="show/:id" element={<CategoryShow />} />
-                    </Route>
-                    <Route path="*" element={<ErrorComponent />} />
+                    index
+                    element={<NavigateToResource resource="blog_posts" />}
+                  />
+                   <Route path="/trips">
+                    <Route index element={<TripsList />} />
+                    <Route path="trips" element={<TripsCreate />} />
+                    <Route path="trips/:id" element={<TripsEdit />} />
+                    <Route path="trips/:id" element={<TripsShow />} />
                   </Route>
-                </Routes>
+                  <Route path="/customers">
+                    <Route index element={<CustomersList />} />
+                    <Route path="create" element={<CustomersCreate />} />
+                    <Route path="edit/:id" element={<CustomersEdit />} />
+                    <Route path="show/:id" element={<CustomersShow />} />
+                  </Route>
+                  <Route path="/categories">
+                    <Route index element={<CategoryList />} />
+                    <Route path="create" element={<CategoryCreate />} />
+                    <Route path="edit/:id" element={<CategoryEdit />} />
+                    <Route path="show/:id" element={<CategoryShow />} />
+                  </Route>
+                  <Route path="*" element={<ErrorComponent />} />
+                </Route>
+              </Routes>
 
-                <RefineKbar />
-                <UnsavedChangesNotifier />
-                <DocumentTitleHandler />
-              </Refine>
-              <DevtoolsPanel />
-            </DevtoolsProvider>
+              <RefineKbar />
+              <UnsavedChangesNotifier />
+              <DocumentTitleHandler />
+            </Refine>
           </RefineSnackbarProvider>
         </ColorModeContextProvider>
       </RefineKbarProvider>
