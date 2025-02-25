@@ -1,7 +1,7 @@
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Autocomplete, Box, Button, Chip, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, Chip, Grid2, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { Create, useAutocomplete } from "@refinedev/mui";
 import { useForm } from "@refinedev/react-hook-form";
 import { Controller } from "react-hook-form";
@@ -63,6 +63,7 @@ export const CustomersCreate = () => {
         sx={{ display: "flex", flexDirection: "column" }}
         autoComplete="off"
       >
+       
         <TextField
           {...register("name", {
             required: "This field is required",
@@ -75,6 +76,7 @@ export const CustomersCreate = () => {
           type="text"
           label={"Name"}
           name="name"
+          size='small'
         />
         <TextField
           {...register("phone", {
@@ -88,6 +90,7 @@ export const CustomersCreate = () => {
           type="text"
           label={"Phone num"}
           name="phone"
+          size='small'
         />
 
 
@@ -107,6 +110,7 @@ export const CustomersCreate = () => {
                   {...field}
                   value={field?.value || "Karnataka"}
                   id="state-select"
+                  size='small'
                 >
                   {indianStates.map((state) => (
                     <MenuItem key={state} value={state}>
@@ -133,6 +137,7 @@ export const CustomersCreate = () => {
           name="locationAddress"
           multiline
           rows={2}
+          size='small'
         />
 
         <Controller
@@ -144,7 +149,7 @@ export const CustomersCreate = () => {
             return (
               <>
                 <MuiChipsInput
-
+                  size='small'
                   label="Enter vehicle num"
                   placeholder='Enter vehicle num'
                   value={vehicleNumbers}

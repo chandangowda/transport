@@ -59,6 +59,7 @@ export const CustomersEdit = () => {
           type="text"
           label={"Name"}
           name="name"
+          size='small'
         />
         <TextField
           {...register("phone", {
@@ -72,6 +73,7 @@ export const CustomersEdit = () => {
           type="text"
           label={"Phone num"}
           name="phone"
+          size='small'
         />
 
 
@@ -91,6 +93,7 @@ export const CustomersEdit = () => {
                   {...field}
                   value={field?.value || "Karnataka"}
                   id="state-select"
+                  size='small'
                 >
                   {indianStates.map((state) => (
                     <MenuItem key={state} value={state}>
@@ -117,6 +120,7 @@ export const CustomersEdit = () => {
           name="locationAddress"
           multiline
           rows={2}
+          size='small'
         />
 
         <Controller
@@ -138,6 +142,7 @@ export const CustomersEdit = () => {
                   fullWidth
                   slotProps={{ inputLabel: { shrink: true } }}
                   name="vehicleNumbers"
+                  size='small'
                   onChange={handleAddVehicle}
                 />
               </>

@@ -8,6 +8,12 @@ import { MuiChipsInput } from 'mui-chips-input';
 import { BaseRecord, useList, useMany } from '@refinedev/core';
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from 'dayjs';
+import Grid from '@mui/material/Grid2';
+import { useEffect } from "react";
+import { useImmer } from "use-immer";
+import AddSharpIcon from '@mui/icons-material/AddSharp';
+import { ClearSharp } from "@mui/icons-material";
+
 
 
 const indianStates = [
@@ -41,6 +47,16 @@ interface Customer extends BaseRecord {
   vehicleNumbers: string[];
 }
 
+interface TripCreateState {
+  vehicleToCustomer: {
+    value: string;
+    label: string;
+  }[],
+  advanceData: { name: string, value: number, remark: string }[],
+  additionalData: { name: string, value: number, remark: string }[]
+
+}
+
 export const TripsCreate = () => {
   const {
     saveButtonProps,
@@ -61,11 +77,15 @@ export const TripsCreate = () => {
     }
   });
 
-  const selectedCustomerId: string = watch("customer", '');
+  const [state, setState] = useImmer<TripCreateState>({
+    vehicleToCustomer: [],
+    advanceData: [],
+    additionalData: [],
+  });
 
-  const dieselAmount: number = watch("dieselAmount", 0);
-  const amountPaid: number = watch("amountPaid", 0);
-  const tripAmount: number = watch("tripAmount", 0);
+  const vehicleNum: string = watch("vehicleNum", '');
+
+  const lorryHire: number = watch("lorryHire", 0);
 
   const { data: customersData, isLoading: customersIsLoading } = useList<Customer>({
     resource: "customers"
@@ -75,7 +95,69 @@ export const TripsCreate = () => {
     resource: "party"
   });
 
-  console.log("customersData", customersData?.data);
+  useEffect(() => {
+    if (customersData && customersData.data) {
+      const formattedData = customersData?.data?.flatMap((eachCustomer) =>
+        eachCustomer.vehicleNumbers.map((eachVehicle) => ({
+          value: eachCustomer.id,
+          label: eachVehicle
+        }))
+      );
+      setState(draft => {
+        draft.vehicleToCustomer = formattedData;
+      })
+    }
+  }, [customersData])
+
+  const handleAdvanceRow = () => {
+    setState(draft => {
+      draft.advanceData.push({ name: '', value: 0, remark: '' });
+    })
+  }
+
+  const handleInputChange = (id: number, field: string, value: string) => {
+    isNaN(Number(value));
+    setState(draft => {
+      draft.advanceData = draft.advanceData.map((row, index) => (index === id ? { ...row, [field]: isNaN(Number(value)) ? value : Number(value) } : row))
+    })
+  };
+
+  const handleRemoveRow = (rowIndex: number) => {
+    setState(draft => {
+      draft.advanceData = draft.advanceData.filter((_, index) => rowIndex !== index)
+    })
+  };
+
+
+  const handleAdvanceRowAdditional = () => {
+    setState(draft => {
+      draft.additionalData.push({ name: '', value: 0, remark: '' });
+    })
+  }
+
+  const handleInputChangeAdditional = (id: number, field: string, value: string) => {
+    setState(draft => {
+      draft.additionalData = draft.additionalData.map((row, index) => (index === id ? { ...row, [field]: isNaN(Number(value)) ? value : Number(value) } : row))
+    })
+  };
+
+  const handleRemoveRowAdditional = (rowIndex: number) => {
+    setState(draft => {
+      draft.additionalData = draft.additionalData.filter((_, index) => rowIndex !== index)
+    })
+  };
+
+  const calculateRemainingBalance = () => {
+    if (lorryHire == 0) {
+      return 0
+    }
+    const totalValue = state.advanceData.reduce((sum, item) => sum + (item.value || 0), 0);
+    return lorryHire - totalValue;
+  }
+
+  const calculateAdditionalAmount = () => {
+    return state.additionalData.reduce((sum, item) => sum + (item.value || 0), 0);
+  }
 
 
   return (
@@ -85,19 +167,41 @@ export const TripsCreate = () => {
         sx={{ display: "flex", flexDirection: "column" }}
         autoComplete="off"
       >
-        <TextField
-          {...register("tripName", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.tripName}
-          helperText={(errors as any)?.tripName?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="text"
-          label={"Trip Name"}
-          name="tripName"
-        />
+        <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+            <TextField
+              {...register("tripSource", {
+                required: "This field is required",
+              })}
+              error={!!(errors as any)?.tripName}
+              helperText={(errors as any)?.tripName?.message}
+              margin="normal"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="text"
+              label={"Trip Source"}
+              name="tripSource"
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+            <TextField
+              {...register("tripDestination", {
+                required: "This field is required",
+              })}
+              error={!!(errors as any)?.tripName}
+              helperText={(errors as any)?.tripName?.message}
+              margin="normal"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="text"
+              label={"Trip Destination"}
+              name="tripDestination"
+              size="small"
+            />
+          </Grid>
+
+        </Grid>
 
         <Controller
           control={control}
@@ -111,38 +215,11 @@ export const TripsCreate = () => {
                   label="Trip Data"
                   defaultValue={dayjs()}
                   format="DD/MM/YYYY"
+                  slotProps={{ textField: { size: "small" } }}
                 />
               </LocalizationProvider>
             );
           }}
-        />
-
-        <TextField
-          {...register("tripSource", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.tripName}
-          helperText={(errors as any)?.tripName?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="text"
-          label={"Trip Source"}
-          name="tripSource"
-        />
-
-        <TextField
-          {...register("tripDestination", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.tripName}
-          helperText={(errors as any)?.tripName?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="text"
-          label={"Trip Destination"}
-          name="tripDestination"
         />
 
         <Controller
@@ -161,6 +238,7 @@ export const TripsCreate = () => {
                   {...field}
                   value={field?.value || "Wood Picker"}
                   id="party-select"
+                  size="small"
                 >
                   {partyData?.data?.map((party: { name: string }, index) => (
                     <MenuItem key={index} value={party.name}>
@@ -175,78 +253,86 @@ export const TripsCreate = () => {
 
         <Controller
           control={control}
-          {...register("customer", {
-            required: "This field is required",
-          })}
-          render={({ field }) => {
-            return (
-              <>
-                <InputLabel variant="standard" htmlFor="customer-select">
-                  Select Customer
-                </InputLabel>
-
-                <Select
-                  {...field}
-                  value={field?.value || ""}
-                  id="customer-select"
-                >
-                  {customersData?.data?.map((party, index) => (
-                    <MenuItem key={index} value={party.id}>
-                      {party.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </>
-            );
-          }}
+          name={"vehicleNum"}
+          rules={{ required: "This field is required" }}
+          // eslint-disable-next-line
+          defaultValue={null as any}
+          render={({ field }) => (
+            <Autocomplete
+              options={state.vehicleToCustomer}
+              onChange={(_, value) => {
+                field.onChange(value?.label);
+              }}
+              getOptionLabel={(item) => {
+                return (
+                  state.vehicleToCustomer?.find((p) => {
+                    return item.label.toLowerCase() === p.label.toLowerCase();
+                  })?.label ?? ""
+                );
+              }}
+              isOptionEqualToValue={(option, value) => {
+                return value === undefined || option.label.toLowerCase() === value.label.toLowerCase();
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={"Vehicle Number"}
+                  margin="normal"
+                  variant="outlined"
+                  error={!!(errors as any)?.vehicleNum}
+                  helperText={(errors as any)?.vehicleNum?.message}
+                  required
+                  size="small"
+                />
+              )}
+            />
+          )}
         />
 
-        <Controller
-          control={control}
-          {...register("vehicleNum", {
-            required: "This field is required",
-          })}
-          render={({ field }) => {
-            return (
-              <>
-                <InputLabel variant="standard" htmlFor="vehicle-select">
-                  Select Vehicle
-                </InputLabel>
+        <Typography variant="body1" fontWeight="bold">
+          {"Customer Name"}
+        </Typography>
+        <TextField size="small" value={customersData?.data.find(eachCustomer => {
+          const vehicleInfo = state.vehicleToCustomer.find(eachVehicle => eachVehicle.label === vehicleNum);
+          return eachCustomer.id === vehicleInfo?.value;
+        })?.name || ""} />
 
-                <Select
-                  {...field}
-                  value={field?.value || ""}
-                  id="vehicle-select"
-                >
-                  {customersData?.data?.filter(eachCustomer => selectedCustomerId &&
-                    selectedCustomerId.length > 0 && eachCustomer.id == selectedCustomerId)
-                    .at(0)
-                    ?.vehicleNumbers
-                    .map((eachData, index) => (
-                      <MenuItem key={index} value={eachData}>
-                        {eachData}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </>
-            );
-          }}
-        />
 
-        <TextField
-          {...register("tripQuantity", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.tripQuantity}
-          helperText={(errors as any)?.tripQuantity?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="number"
-          label={"Trip Quantity"}
-          name="tripQuantity"
+        <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+            <TextField
+              {...register("tripQuantity", {
+                required: "This field is required",
+              })}
+              error={!!(errors as any)?.tripQuantity}
+              helperText={(errors as any)?.tripQuantity?.message}
+              margin="normal"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="number"
+              label={"Trip Quantity"}
+              name="tripQuantity"
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+            <TextField
+              {...register("tripQuantityUnit", {
+                required: "This field is required",
+              })}
+              error={!!(errors as any)?.tripQuantityUnit}
+              helperText={(errors as any)?.tripQuantityUnit?.message}
+              margin="normal"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="text"
+              label={"Unit"}
+              name="tripQuantityUnit"
+              size="small"
+            />
+          </Grid>
 
-        />
+        </Grid>
 
         <TextField
           {...register("tripAmount", {
@@ -260,104 +346,242 @@ export const TripsCreate = () => {
           type="number"
           label={"Trip Amount"}
           name="tripAmount"
-
+          size="small"
         />
 
+
         <TextField
-          {...register("dieselAmount", {
+          {...register("lorryHire", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.tripQuantity}
-          helperText={(errors as any)?.tripQuantity?.message}
+          error={!!(errors as any)?.lorryHire}
+          helperText={(errors as any)?.lorryHire?.message}
           margin="normal"
           fullWidth
           slotProps={{ inputLabel: { shrink: true } }}
           type="number"
-          label={"Diesel Amount Paid"}
-          name="dieselAmount"
+          label={"Lorry Hire"}
+          name="lorryHire"
+          size="small"
         />
 
-        <TextField
-          {...register("amountPaid", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.tripQuantity}
-          helperText={(errors as any)?.tripQuantity?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="number"
-          label={"Amount Paid"}
-          name="amountPaid"
-        />
+        <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }} marginTop={5}>
+          <Typography variant="body1" fontWeight="bold">
+            {"Advance"}
+          </Typography>
 
-        <Typography variant="body1" fontWeight="bold">
+          <AddSharpIcon
+            color="primary"
+            sx={{
+              cursor: "pointer",
+              transition: "0.3s",
+              "&:hover": {
+                transform: "scale(1.2)",
+                color: "secondary.main"
+              },
+              "&:active": {
+                transform: "scale(0.9)"
+              }
+            }}
+            onClick={handleAdvanceRow}
+          />
+
+        </Grid>
+
+        <Box
+          component="form"
+          sx={{ display: "flex", flexDirection: "column" }}
+          autoComplete="off"
+        >
+          {
+            state.advanceData.map((eachData, index) => (
+              <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }}>
+                <Grid size={{ xs: 4, sm: 4, md: 4 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="text"
+                    label={"Name"}
+                    value={eachData.name}
+                    size="small"
+                    onChange={(value => {
+                      handleInputChange(index, 'name', value.target.value)
+
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 3, sm: 3, md: 2 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="number"
+                    label={"Value"}
+                    size="small"
+                    value={eachData.value}
+                    onChange={(value => {
+                      console.log('value.target.value', value.target.value);
+                      handleInputChange(index, 'value', value.target.value)
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 4, sm: 4, md: 5 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="text"
+                    label={"Remarks"}
+                    name="tripDestination"
+                    size="small"
+                    value={eachData.remark}
+                    onChange={(value => {
+                      handleInputChange(index, 'remark', value.target.value)
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 1, sm: 1, md: 1 }} sx={{ display: "flex", marginTop: "5px", alignItems: "center", justifyContent: "flex-start" }}
+                >
+                  <ClearSharp color="primary"
+                    onClick={() => {
+                      handleRemoveRow(index);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      transition: "0.3s",
+                      "&:hover": {
+                        transform: "scale(1.2)",
+                        color: "secondary.main"
+                      },
+                      "&:active": {
+                        transform: "scale(0.9)"
+                      }
+                    }} />
+                </Grid>
+
+              </Grid>
+            ))
+          }
+        </Box>
+
+        <Typography variant="body1" fontWeight="bold" margin="normal">
           {"Remaining Amount"}
         </Typography>
-        <TextField value={tripAmount - dieselAmount - amountPaid} />
+        <TextField size="small"
+          value={calculateRemainingBalance()} />
 
 
 
-        {/* <TextField
-          {...register("phone", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.phone}
-          helperText={(errors as any)?.phone?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="text"
-          label={"Phone num"}
-          name="phone"
-        />
+        <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }} marginTop={5}>
+          <Typography variant="body1" fontWeight="bold" >
+            {"Additional Charges"}
+          </Typography>
 
+          <AddSharpIcon
+            color="primary"
+            sx={{
+              cursor: "pointer",
+              transition: "0.3s",
+              "&:hover": {
+                transform: "scale(1.2)",
+                color: "secondary.main"
+              },
+              "&:active": {
+                transform: "scale(0.9)"
+              }
+            }}
+            onClick={handleAdvanceRowAdditional}
+          />
 
-        <Controller
-          control={control}
-          {...register("state", {
-            required: "This field is required",
-          })}
-          render={({ field }) => {
-            return (
-              <>
-                <InputLabel variant="standard" htmlFor="state-select">
-                  Select State
-                </InputLabel>
+        </Grid>
 
-                <Select
-                  {...field}
-                  value={field?.value || "Karnataka"}
-                  id="state-select"
+        <Box
+          component="form"
+          sx={{ display: "flex", flexDirection: "column" }}
+          autoComplete="off"
+        >
+          {
+            state.additionalData.map((eachData, index) => (
+              <Grid container spacing={{ xs: 1, md: 3 }} columns={{ xs: 12, sm: 12, md: 12 }}>
+                <Grid size={{ xs: 4, sm: 4, md: 4 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="text"
+                    label={"Name"}
+                    value={eachData.name}
+                    size="small"
+                    onChange={(value => {
+                      handleInputChangeAdditional(index, 'name', value.target.value)
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 3, sm: 3, md: 2 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="number"
+                    label={"Value"}
+                    size="small"
+                    value={eachData.value}
+                    onChange={(value => {
+                      console.log('value.target.value', value.target.value);
+                      handleInputChangeAdditional(index, 'value', value.target.value)
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 4, sm: 4, md: 5 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    type="text"
+                    label={"Remarks"}
+                    name="tripDestination"
+                    size="small"
+                    value={eachData.remark}
+                    onChange={(value => {
+                      handleInputChangeAdditional(index, 'remark', value.target.value)
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 1, sm: 1, md: 1 }} sx={{ display: "flex", marginTop: "5px", alignItems: "center", justifyContent: "flex-start" }}
                 >
-                  {indianStates.map((state) => (
-                    <MenuItem key={state} value={state}>
-                      {state}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </>
-            );
-          }}
-        />
+                  <ClearSharp color="primary"
+                    onClick={() => {
+                      handleRemoveRowAdditional(index);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      transition: "0.3s",
+                      "&:hover": {
+                        transform: "scale(1.2)",
+                        color: "secondary.main"
+                      },
+                      "&:active": {
+                        transform: "scale(0.9)"
+                      }
+                    }} />
+                </Grid>
 
-        <TextField
-          {...register("locationAddress", {
-            required: "This field is required",
-          })}
-          error={!!(errors as any)?.locationAddress}
-          helperText={(errors as any)?.locationAddress?.message}
-          margin="normal"
-          fullWidth
-          slotProps={{ inputLabel: { shrink: true } }}
-          type="text"
-          label={"Location Address"}
-          name="locationAddress"
-          multiline
-          rows={2}
-        /> */}
+              </Grid>
+            ))
+          }
+        </Box>
 
+        <Typography variant="body1" fontWeight="bold" margin="normal">
+          {"Additional Amount"}
+        </Typography>
+        <TextField size="small"
+          value={calculateAdditionalAmount()} />
       </Box>
+
+
+
+
     </Create>
   );
 };
